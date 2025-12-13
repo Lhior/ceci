@@ -611,8 +611,8 @@ I currently know about these stages:
         )
         parser.add_argument(
             "--memmon",
-            type=int,
-            default=0,
+            type=float,
+            default=0.0,
             help="Report memory use. Argument gives interval in seconds between reports",
         )
 
@@ -1593,6 +1593,17 @@ I currently know about these stages:
                     f"Missing output location {aliased_tag} {str(outputs)}"
                 ) from msg
             flags.append(f"--{tag}={fpath}")
+
+        # Optional: auto-enable memory monitoring if requested via env var.
+        # This lets pipeline launchers add memmon without editing each stage command.
+        memmon_env = os.getenv("CECI_MEMMON_INTERVAL", os.getenv("CECI_MEMMON", ""))
+        if memmon_env:
+            try:
+                memmon_interval = float(memmon_env)
+                if memmon_interval > 0:
+                    flags.append(f"--memmon={memmon_interval}")
+            except ValueError:
+                pass  # ignore invalid values rather than failing stage construction
 
         flags = "   ".join(flags)
 
